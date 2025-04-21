@@ -336,6 +336,8 @@ int main() {
 	bool prevLeftPressed = false;
 	bool prevRightPressed = false;
 
+	// git werkt
+
 	while (window.isOpen()) {
 
 		while (window.pollEvent(evnt)) {
