@@ -374,16 +374,17 @@ int main() {
 					string newPath;
 					cout<<"Give path to new sound: ";
 					cin >> newPath;
-					cout << endl;
+					cout << newPath << endl;
 
 					sf::SoundBuffer newpathSB;
-					newpathSB.loadFromFile("carrier.wav");
+					newpathSB.loadFromFile(newPath);
 					vector < sf::Int16> newpathSamples;
 					for (int i = 0; i < newpathSB.getSampleCount();i++) {
 						newpathSamples.push_back(newpathSB.getSamples()[i]);
 					}
 					carrierSound.data = newpathSamples;
 					carrierSound.reloadSound();
+					vocodSound.data = vocoder(modulSound.data, carrierSound.data);
 
 				}
 			}
