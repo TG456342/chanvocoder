@@ -5,7 +5,9 @@
 #include<string>
 #include<complex>
 #include"SOUND.h"
+#include"settings.h"
 using namespace std;
+typedef float (*WINDOWINGFUNCTIONS)(float index, float total);
 #define euler = 2.718; 
 
 sf::RenderWindow window(sf::VideoMode(1600, 1000), "vocoder STEM", sf::Style::Close | sf::Style::Titlebar | sf::Style::Resize);
@@ -145,6 +147,9 @@ float defaultWindowFunct(float index, float total) {
 }
 
 float cosineWindowingFunct(float index, float total) {
+	return (cos(index / total * 2 * PI + PI) + 1) / 2.f;
+}
+float halfCosineWindowingFunct(float index, float total) {
 	return (cos(index / total * PI - PI / 2));
 }
 
@@ -314,7 +319,15 @@ int main() {
 
 	sf::Event evnt;
 
-	vector<sf::Int16> vocOutp = vocoderPath("modulator1.wav", "carrier.wav", 1024,32,cosineWindowingFunct);
+	WINDOWINGFUNCTIONS windowingFunctions[] = {
+
+	defaultWindowFunct,
+	cosineWindowingFunct,
+	halfCosineWindowingFunct
+
+	};
+
+	vector<sf::Int16> vocOutp = vocoderPath("modulator1.wav", "carrier.wav", 512,32,windowingFunctions[1], windowingFunctions[1]);
 	sf::SoundBuffer carrierSB;
 	carrierSB.loadFromFile("carrier.wav");
 	vector < sf::Int16> carrierSamples;
@@ -332,6 +345,8 @@ int main() {
 	SOUND carrierSound(carrierSamples);
 	SOUND modulSound(modSamples);
 	SOUND vocodSound(vocOutp);
+
+	settings vocSet;
 
 	bool prevLeftPressed = false;
 	bool prevRightPressed = false;
@@ -352,7 +367,7 @@ int main() {
 		else {
 			if (prevLeftPressed) {
 				sf::Vector2f mPos = sf::Vector2f(sf::Mouse::getPosition(window));
-				if (mPos.x > carrierSound.position.x&& mPos.x < carrierSound.position.x + carrierSound.siez.x&& mPos.y > carrierSound.position.y && mPos.y < carrierSound.position.y + carrierSound.siez.y) {
+				if (mPos.x > carrierSound.position.x && mPos.x < carrierSound.position.x + carrierSound.siez.x && mPos.y > carrierSound.position.y && mPos.y < carrierSound.position.y + carrierSound.siez.y) {
 					carrierSound.playSound();
 				}
 				if (mPos.x > modulSound.position.x && mPos.x < modulSound.position.x + modulSound.siez.x && mPos.y > modulSound.position.y && mPos.y < modulSound.position.y + modulSound.siez.y) {
@@ -372,7 +387,7 @@ int main() {
 				sf::Vector2f mPos = sf::Vector2f(sf::Mouse::getPosition(window));
 				if (mPos.x > carrierSound.position.x && mPos.x < carrierSound.position.x + carrierSound.siez.x && mPos.y > carrierSound.position.y && mPos.y < carrierSound.position.y + carrierSound.siez.y) {
 					string newPath;
-					cout<<"Give path to new sound: ";
+					cout << "Give path to new sound: ";
 					cin >> newPath;
 					cout << newPath << endl;
 
@@ -385,6 +400,25 @@ int main() {
 					carrierSound.data = newpathSamples;
 					carrierSound.reloadSound();
 					vocodSound.data = vocoder(modulSound.data, carrierSound.data);
+					vocodSound.reloadSound();
+
+				}
+				if (mPos.x > modulSound.position.x && mPos.x < modulSound.position.x + modulSound.siez.x && mPos.y > modulSound.position.y && mPos.y < modulSound.position.y + modulSound.siez.y) {
+					string newPath;
+					cout << "Give path to new sound: ";
+					cin >> newPath;
+					cout << newPath << endl;
+
+					sf::SoundBuffer newpathSB;
+					newpathSB.loadFromFile(newPath);
+					vector < sf::Int16> newpathSamples;
+					for (int i = 0; i < newpathSB.getSampleCount();i++) {
+						newpathSamples.push_back(newpathSB.getSamples()[i]);
+					}
+					modulSound.data = newpathSamples;
+					modulSound.reloadSound();
+					vocodSound.data = vocoder(modulSound.data, carrierSound.data);
+					vocodSound.reloadSound();
 
 				}
 			}
@@ -392,10 +426,11 @@ int main() {
 		}
 
 		window.clear();
-		
-		carrierSound.drawSound(window, {200,100}, {1200,200}, "carrier");
-		modulSound.drawSound(window, {200,400}, {1200,200}, "modulator");
-		vocodSound.drawSound(window, {200,700}, {1200,200}, "vocoded output");
+
+		carrierSound.drawSound(window, { 100,100 }, { 1000,200 }, "carrier");
+		modulSound.drawSound(window, { 100,400 }, { 1000,200 }, "modulator");
+		vocodSound.drawSound(window, { 100,700 }, { 1000,200 }, "vocoded output");
+		vocSet.drawPanel(window, { 1200,100 }, {300, 800});
 
 		window.display();
 
