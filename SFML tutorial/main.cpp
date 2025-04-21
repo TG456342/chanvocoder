@@ -336,7 +336,7 @@ int main() {
 	bool prevLeftPressed = false;
 	bool prevRightPressed = false;
 
-	// git werkt
+	// git werkt ook voor karel
 
 	while (window.isOpen()) {
 
