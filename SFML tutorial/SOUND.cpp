@@ -1,7 +1,8 @@
 #include "SOUND.h"
 
-SOUND::SOUND(vector<sf::Int16> dat) {
+SOUND::SOUND(vector<sf::Int16> dat, vector<complex<float>> freqDat) {
 	data = dat;
+	freqData = freqDat;
 	font.loadFromFile("calibri.ttf");
 	SB.loadFromSamples(&data[0], data.size(), 1, 44100);
 	s.setBuffer(SB);
@@ -62,7 +63,12 @@ void SOUND::drawSound(sf::RenderWindow& window ,sf::Vector2f pos, sf::Vector2f s
 	tex.setString(text);
 	window.draw(tex);
 
-	visualizeAudioData(window, data, newPos, newSize);
+	if (!showFreq) {
+		visualizeAudioData(window, data, newPos, newSize);
+	}
+	else {
+		visualizeComplexData(window, freqData, newPos, newSize);
+	}
 
 	position = pos;
 	siez = size;

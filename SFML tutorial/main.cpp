@@ -342,9 +342,9 @@ int main() {
 	}
 
 
-	SOUND carrierSound(carrierSamples);
-	SOUND modulSound(modSamples);
-	SOUND vocodSound(vocOutp);
+	SOUND carrierSound(carrierSamples, FFT(carrierSamples));
+	SOUND modulSound(modSamples, FFT(modSamples));
+	SOUND vocodSound(vocOutp, FFT(vocOutp));
 
 	settings vocSet;
 
@@ -358,6 +358,35 @@ int main() {
 		while (window.pollEvent(evnt)) {
 			if (evnt.type == evnt.Closed) {
 				window.close();
+			}
+			if (evnt.type == sf::Event::MouseWheelMoved)
+			{
+
+				if (carrierSound.checkIfMouseIn(sf::Vector2f(sf::Mouse::getPosition(window)))) {
+					if (evnt.mouseWheel.delta > 0) {
+						carrierSound.showFreq = false;
+					}
+					else if (evnt.mouseWheel.delta < 0) {
+						carrierSound.showFreq = true;
+					}
+				}
+				if (modulSound.checkIfMouseIn(sf::Vector2f(sf::Mouse::getPosition(window)))) {
+					if (evnt.mouseWheel.delta > 0) {
+						modulSound.showFreq = false;
+					}
+					else if (evnt.mouseWheel.delta < 0) {
+						modulSound.showFreq = true;
+					}
+				}
+				if (vocodSound.checkIfMouseIn(sf::Vector2f(sf::Mouse::getPosition(window)))) {
+					if (evnt.mouseWheel.delta > 0) {
+						vocodSound.showFreq = false;
+					}
+					else if (evnt.mouseWheel.delta < 0) {
+						vocodSound.showFreq = true;
+					}
+				}
+
 			}
 		}
 
