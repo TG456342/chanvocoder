@@ -5,6 +5,7 @@
 #include<SFML/Graphics.hpp>
 #include<SFML/Audio.hpp>
 #include<complex>
+#include"RoundRect.h"
 
 using namespace std;
 
@@ -38,7 +39,6 @@ private:
 		window.draw(va);
 
 	}
-
 	void visualizeComplexData(sf::RenderWindow& window, vector<complex<float>> dataC, sf::Vector2f pos2, sf::Vector2f size2) {
 		float highest = 0;
 		int highestIndex = 0;
@@ -57,11 +57,13 @@ private:
 public:
 	sf::SoundBuffer SB;
 	sf::Sound s;
-	sf::Vector2f position;
-	sf::Vector2f siez;
+	sf::Vector2f position = {0,0};
+	sf::Vector2f siez{ 0,0 };
 	string txt = "";
 	vector<sf::Int16> data;
 	vector<complex<float>> freqData;
+	RoundRect rr = RoundRect(position,siez,2,"");
+
 
 	bool showFreq = false;
 

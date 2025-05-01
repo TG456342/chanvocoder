@@ -12,56 +12,13 @@ void SOUND::drawSound(sf::RenderWindow& window ,sf::Vector2f pos, sf::Vector2f s
 	// draw border
 
 	sf::VertexArray va(sf::TriangleFan);
+	sf::Vector2f newPos = pos + sf::Vector2f{ 20, 20 };
+	sf::Vector2f newSize = size - sf::Vector2f{ 40, 40 };
 
-	sf::Vector2f newPos = pos + sf::Vector2f{20, 20};
-	sf::Vector2f newSize = size - sf::Vector2f{40, 40};
-
-	for (int i = 0; i < 120;i++) {
-
-		sf::Vector2f pDir = { cosf(float(i) / 120.f * 3.141592 * 2), sinf(float(i) / 120.f * 3.141592 * 2) };
-		if (i < 30) {
-			va.append(sf::Vertex(pDir * 20.f+pos + size, sf::Color::Yellow));
-		}
-		else if (i < 60) {
-			va.append(sf::Vertex(pDir * 20.f + sf::Vector2f{pos.x,pos.y+size.y}, sf::Color::Yellow));
-		}
-		else if (i < 90) {
-			va.append(sf::Vertex(pDir * 20.f + pos, sf::Color::Yellow));
-		}
-		else if (i < 120) {
-			va.append(sf::Vertex(pDir * 20.f + sf::Vector2f{ pos.x+size.x,pos.y }, sf::Color::Yellow));
-		}
-
-	}
-	window.draw(va);
-	va.clear();
-
-	for (int i = 0; i < 120;i++) {
-
-		sf::Vector2f pDir = { cosf(float(i) / 120.f * 3.141592 * 2), sinf(float(i) / 120.f * 3.141592 * 2) };
-		if (i < 30) {
-			va.append(sf::Vertex(pDir * 18.f + pos + size, sf::Color::Black));
-		}
-		else if (i < 60) {
-			va.append(sf::Vertex(pDir * 18.f + sf::Vector2f{ pos.x,pos.y + size.y }, sf::Color::Black));
-		}
-		else if (i < 90) {
-			va.append(sf::Vertex(pDir * 18.f + pos, sf::Color::Black));
-		}
-		else if (i < 120) {
-			va.append(sf::Vertex(pDir * 18.f + sf::Vector2f{ pos.x + size.x,pos.y }, sf::Color::Black));
-		}
-
-	}
-	window.draw(va);
-
-	sf::Text tex;
-	tex.setFont(font);
-	tex.setFillColor(sf::Color::Yellow);
-	tex.setCharacterSize(20);
-	tex.setPosition(pos + sf::Vector2f{-4,-12});
-	tex.setString(text);
-	window.draw(tex);
+	rr.pos = position;
+	rr.size = siez;
+	rr.txts = text;
+	rr.drawRect(window);
 
 	if (!showFreq) {
 		visualizeAudioData(window, data, newPos, newSize);
@@ -87,4 +44,5 @@ void SOUND::playSound() {
 		s.stop();
 		isPlaying = false;
 	}
+
 }

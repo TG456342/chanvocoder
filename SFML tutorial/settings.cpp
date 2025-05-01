@@ -4,7 +4,7 @@ typedef float (*WINDOWINGFUNCTIONS)(float index, float total);
 float PI = 3.14159265358979323846264338;
 
 float defaultWindowFuncts(float index, float total) {
-	return 1;
+	return 0.5;
 }
 
 float cosineWindowingFuncts(float index, float total) {
@@ -21,132 +21,89 @@ vector<WINDOWINGFUNCTIONS> windowingFunctions = {
 
 };
 
-settings::settings() {
+settings::settings(sf::Vector2f p, sf::Vector2f s) {
 	Font.loadFromFile("calibri.ttf");
-	pos = { 0,0 };
-	size = { 0,0 };
+	pos = p;
+	size = s;
+	backGr.pos = p;
+	backGr.size = s;
+
+	sf::Vector2f newPos = pos + sf::Vector2f{ size.x * 0.10f, 180.f };
+	sf::Vector2f newSize = sf::Vector2f{ size.x * 0.80f, size.x * 0.40f };
+
+	windowFunctRect.pos = newPos;
+	windowFunctRect.size = newSize;
+	elements[0].pos = pos + sf::Vector2f{ -4,-18 } + sf::Vector2f{ 20,60 };
+	elements[0].size = { float(backGr.size.x) * 0.7f,24 };
+	elements[0].tex = "window width: " + to_string(windowWidth);
+	elements[0].textC = sf::Color::Yellow;
+	elements[1].pos = pos + sf::Vector2f{ -4,-18 } + sf::Vector2f{ 20,100 };
+	elements[1].size = { backGr.size.x * 0.7f,24 };
+	elements[1].tex = "amount of bands: " + to_string(bandCount);
+	elements[1].textC = sf::Color::Yellow;
+	elements[2].pos = pos + sf::Vector2f{ -4,-18 } + sf::Vector2f{ 20,140 };
+	elements[2].size = { backGr.size.x * 0.7f,24 };
+	elements[2].tex = "windowing function: ";
+	elements[2].textC = sf::Color::Yellow;
+
 }
 
 void settings::drawPanel(sf::RenderWindow& window, sf::Vector2f posi, sf::Vector2f siz) {
-	pos = posi;
-	size = siz;
-
 
 	sf::VertexArray va(sf::TriangleFan);
 
-	sf::Vector2f newPos = pos + sf::Vector2f{ 20, 20 };
-	sf::Vector2f newSize = size - sf::Vector2f{ 40, 40 };
+	backGr.drawRect(window);
 
-	for (int i = 0; i < 120;i++) {
 
-		sf::Vector2f pDir = { cosf(float(i) / 120.f * 3.141592 * 2), sinf(float(i) / 120.f * 3.141592 * 2) };
-		if (i < 30) {
-			va.append(sf::Vertex(pDir * 20.f + pos + size, sf::Color::Yellow));
-		}
-		else if (i < 60) {
-			va.append(sf::Vertex(pDir * 20.f + sf::Vector2f{ pos.x,pos.y + size.y }, sf::Color::Yellow));
-		}
-		else if (i < 90) {
-			va.append(sf::Vertex(pDir * 20.f + pos, sf::Color::Yellow));
-		}
-		else if (i < 120) {
-			va.append(sf::Vertex(pDir * 20.f + sf::Vector2f{ pos.x + size.x,pos.y }, sf::Color::Yellow));
-		}
+	elements[0].tex = "window width: " + to_string(windowWidth);
+	elements[0].draw(window, Font);
+	elements[1].tex = "amount of bands: " + to_string(bandCount);
+	elements[1].draw(window, Font);
+	elements[2].tex = "windowing function: ";
+	elements[2].draw(window, Font);
 
-	}
-	window.draw(va);
-	va.clear();
 
-	for (int i = 0; i < 120;i++) {
+	windowFunctRect.drawRect(window);
 
-		sf::Vector2f pDir = { cosf(float(i) / 120.f * 3.141592 * 2), sinf(float(i) / 120.f * 3.141592 * 2) };
-		if (i < 30) {
-			va.append(sf::Vertex(pDir * 18.f + pos + size, sf::Color::Black));
-		}
-		else if (i < 60) {
-			va.append(sf::Vertex(pDir * 18.f + sf::Vector2f{ pos.x,pos.y + size.y }, sf::Color::Black));
-		}
-		else if (i < 90) {
-			va.append(sf::Vertex(pDir * 18.f + pos, sf::Color::Black));
-		}
-		else if (i < 120) {
-			va.append(sf::Vertex(pDir * 18.f + sf::Vector2f{ pos.x + size.x,pos.y }, sf::Color::Black));
-		}
+	sf::Vector2f newPos = pos + sf::Vector2f{ size.x * 0.10f, 180.f };
+	sf::Vector2f newSize = sf::Vector2f{ size.x * 0.80f, size.x * 0.40f };
 
-	}
-	window.draw(va);
-
-	sf::Text tex;
-	tex.setFont(Font);
-	tex.setFillColor(sf::Color::Yellow);
-	tex.setCharacterSize(20);
-	tex.setPosition(pos + sf::Vector2f{ -4,-12 });
-	tex.setString("settings");
-	window.draw(tex);
-
-	tex.setPosition(pos + sf::Vector2f{ -4,-12 } + sf::Vector2f{20,60});
-	tex.setString("window width: " + to_string(windowWidth));
-	window.draw(tex);
-	tex.setPosition(pos + sf::Vector2f{ -4,-12 } + sf::Vector2f{ 20,100 });
-	tex.setString("amount of bands: " + to_string(bandCount));
-	window.draw(tex);
-	tex.setPosition(pos + sf::Vector2f{ -4,-12 } + sf::Vector2f{ 20,140 });
-	tex.setString("windowing function: ");
-	window.draw(tex);
-
-	newPos = pos + sf::Vector2f{ size.x * 0.10f, 180.f };
-	newSize = sf::Vector2f{ size.x*0.80f, size.x * 0.40f };
-
-	va.clear();
-	for (int i = 0; i < 120;i++) {
-
-		sf::Vector2f pDir = { cosf(float(i) / 120.f * 3.141592 * 2), sinf(float(i) / 120.f * 3.141592 * 2) };
-		if (i < 30) {
-			va.append(sf::Vertex(pDir * 20.f + newPos + newSize, sf::Color::Yellow));
-		}
-		else if (i < 60) {
-			va.append(sf::Vertex(pDir * 20.f + sf::Vector2f{ newPos.x,newPos.y + newSize.y }, sf::Color::Yellow));
-		}
-		else if (i < 90) {
-			va.append(sf::Vertex(pDir * 20.f + newPos, sf::Color::Yellow));
-		}
-		else if (i < 120) {
-			va.append(sf::Vertex(pDir * 20.f + sf::Vector2f{ newPos.x + newSize.x,newPos.y }, sf::Color::Yellow));
-		}
-
-	}
-	window.draw(va);
-	va.clear();
-
-	for (int i = 0; i < 120;i++) {
-
-		sf::Vector2f pDir = { cosf(float(i) / 120.f * 3.141592 * 2), sinf(float(i) / 120.f * 3.141592 * 2) };
-		if (i < 30) {
-			va.append(sf::Vertex(pDir * 18.f + newPos + newSize, sf::Color::Black));
-		}
-		else if (i < 60) {
-			va.append(sf::Vertex(pDir * 18.f + sf::Vector2f{ newPos.x,newPos.y + newSize.y }, sf::Color::Black));
-		}
-		else if (i < 90) {
-			va.append(sf::Vertex(pDir * 18.f + newPos, sf::Color::Black));
-		}
-		else if (i < 120) {
-			va.append(sf::Vertex(pDir * 18.f + sf::Vector2f{ newPos.x + newSize.x,newPos.y }, sf::Color::Black));
-		}
-
-	}
-	window.draw(va);
 	va.clear();
 
 	va.append(sf::Vertex(sf::Vector2f{ 0.5f * newSize.x * 0.9f + newSize.x * 0.05f, newSize.y } + newPos, sf::Color::Yellow));
 	va.append(sf::Vertex(sf::Vector2f{ newSize.x * 0.05f, newSize.y } + newPos, sf::Color::Yellow));
 
 	for (float i = 0;i < 400;i++) {
-		va.append(sf::Vertex(sf::Vector2f{i*newSize.x*0.9f/400.f+newSize.x*0.05f, windowingFunctions[1](i,400)*newSize.y*-0.9f + newSize.y} + newPos, sf::Color::Yellow));
+		va.append(sf::Vertex(sf::Vector2f{i*newSize.x*0.9f/400.f+newSize.x*0.05f, windowingFunctions[windowIndex](i,400)*newSize.y*-0.9f + newSize.y} + newPos, sf::Color::Yellow));
 	}
 
 	va.append(sf::Vertex(sf::Vector2f{ 1.f * newSize.x * 0.9f  + newSize.x * 0.05f, newSize.y } + newPos, sf::Color::Yellow));
 
 	window.draw(va);
 
+}
+
+void settings::updatePanel(sf::Vector2f mPos, bool left, bool right, int scroll) {
+	if (left) {
+		if (elements[0].checkHovered(mPos)) {
+			windowWidth *= 2;
+		}
+		if (elements[1].checkHovered(mPos)) {
+			bandCount *= 2;
+		}
+		if (windowFunctRect.mouseInRect(mPos)&&windowIndex<windowingFunctions.size()-1) {
+			windowIndex += 1;
+		}
+	}
+	if (right) {
+		if (elements[0].checkHovered(mPos)) {
+			windowWidth /= 2;
+		}
+		if (elements[1].checkHovered(mPos)) {
+			bandCount /= 2;
+		}
+		if (windowFunctRect.mouseInRect(mPos)&& windowIndex >0) {
+			windowIndex -= 1;
+		}
+	}
 }

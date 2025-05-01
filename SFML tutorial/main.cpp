@@ -6,6 +6,7 @@
 #include<complex>
 #include"SOUND.h"
 #include"settings.h"
+#include"RoundRect.h"
 using namespace std;
 typedef float (*WINDOWINGFUNCTIONS)(float index, float total);
 #define euler = 2.718; 
@@ -54,7 +55,6 @@ vector<complex<float>> fft(vector<complex<float>>& a, bool invert = false) {
 
 	return y;
 }
-
 vector<complex<float>> FFT(vector<sf::Int16> data) {
 
 	vector<complex<float>> data2;
@@ -73,7 +73,6 @@ vector<complex<float>> FFT(vector<sf::Int16> data) {
 
 	return data2;
 }
-
 vector<sf::Int16> IFFT(vector<complex<float>> data2) {
 
 	int a = data2.size();
@@ -91,7 +90,6 @@ vector<sf::Int16> IFFT(vector<complex<float>> data2) {
 	}
 	return data;
 }
-
 vector<complex<float>> suppressNoise(vector<complex<float>> data) {
 	float highest = 0;
 	for (int i = 0; i < data.size();i++) {
@@ -128,7 +126,6 @@ void visualizeAudioData(vector<sf::Int16> data, sf::Vector2f pos, sf::Vector2f s
 	window.draw(va);
 
 }
-
 void visualizeComplexData(vector<complex<float>> dataC, sf::Vector2f pos, sf::Vector2f size) {
 	float highest = 0;
 	int highestIndex = 0;
@@ -143,16 +140,14 @@ void visualizeComplexData(vector<complex<float>> dataC, sf::Vector2f pos, sf::Ve
 }
 
 float defaultWindowFunct(float index, float total) {
-	return 1;
+	return 0.5;
 }
-
 float cosineWindowingFunct(float index, float total) {
 	return (cos(index / total * 2 * PI + PI) + 1) / 2.f;
 }
 float halfCosineWindowingFunct(float index, float total) {
 	return (cos(index / total * PI - PI / 2));
 }
-
 float defaultOverlapFunct(float index, float total) {
 	return 0.5;
 }
@@ -293,7 +288,6 @@ vector<sf::Int16> vocoder(vector<sf::Int16> modRawData, vector<sf::Int16> carRaw
 
 	return modulatedCarrierSamples;
 }
-
 vector<sf::Int16> vocoderPath(string modPath, string carPath, int windowWidth = 1024, int bandWidth = 32, float windowFunction(float index, float total) = defaultWindowFunct, float overlapFunction(float index, float total) = defaultWindowFunct) {
 
 	// get raw data from files
@@ -332,134 +326,95 @@ int main() {
 	carrierSB.loadFromFile("carrier.wav");
 	vector < sf::Int16> carrierSamples;
 	for (int i = 0; i < carrierSB.getSampleCount();i++) {
-		carrierSamples.push_back(carrierSB.getSamples()[i]);
+		carrierSamples.push_back(carrierSB.getSamples()[i]/2);
 	}
 	sf::SoundBuffer modSB;
 	modSB.loadFromFile("modulator1.wav");
 	vector < sf::Int16> modSamples;
 	for (int i = 0; i < modSB.getSampleCount();i++) {
-		modSamples.push_back(modSB.getSamples()[i]);
+		modSamples.push_back(modSB.getSamples()[i]/2);
 	}
 
+	vector<SOUND> sounds;
+	sounds.push_back(SOUND(carrierSamples, FFT(carrierSamples)));
+	sounds.push_back(SOUND(modSamples, FFT(modSamples)));
+	sounds.push_back(SOUND(vocOutp, FFT(vocOutp)));
 
-	SOUND carrierSound(carrierSamples, FFT(carrierSamples));
-	SOUND modulSound(modSamples, FFT(modSamples));
-	SOUND vocodSound(vocOutp, FFT(vocOutp));
-
-	settings vocSet;
+	settings vocSet = settings({ 1200,100 }, { 300, 800 });
 
 	bool prevLeftPressed = false;
 	bool prevRightPressed = false;
 
-	// git werkt ook voor karel
+	sf::Vector2f mPos = sf::Vector2f(sf::Mouse::getPosition());
 
 	while (window.isOpen()) {
 
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) {
+			vocOutp = vocoderPath("modulator1.wav", "carrier.wav", vocSet.windowWidth, vocSet.bandCount, windowingFunctions[vocSet.windowIndex], windowingFunctions[vocSet.windowIndex]);
+			sounds[2].data = vocOutp;
+			sounds[2].freqData = FFT(vocOutp);
+			sounds[2].reloadSound();
+		}
+
+		mPos = sf::Vector2f(sf::Mouse::getPosition(window));
 		while (window.pollEvent(evnt)) {
 			if (evnt.type == evnt.Closed) {
 				window.close();
 			}
-			if (evnt.type == sf::Event::MouseWheelMoved)
+
+			switch (evnt.type)
 			{
 
-				if (carrierSound.checkIfMouseIn(sf::Vector2f(sf::Mouse::getPosition(window)))) {
-					if (evnt.mouseWheel.delta > 0) {
-						carrierSound.showFreq = false;
+			case sf::Event::Closed:
+				window.close();
+				break;
+
+			case sf::Event::MouseWheelMoved:
+
+				vocSet.updatePanel(mPos, 0, 0, evnt.mouseWheel.delta);
+				if (evnt.mouseWheel.delta>0) {
+					for (int i = 0; i < sounds.size();i++) {
+						if (sounds[i].checkIfMouseIn(mPos)) {
+							sounds[i].showFreq = false;
+						}
 					}
-					else if (evnt.mouseWheel.delta < 0) {
-						carrierSound.showFreq = true;
+				}else if(evnt.mouseWheel.delta < 0)
+				{
+					for (int i = 0; i < sounds.size();i++) {
+						if (sounds[i].checkIfMouseIn(mPos)) {
+							sounds[i].showFreq = true;
+						}
 					}
 				}
-				if (modulSound.checkIfMouseIn(sf::Vector2f(sf::Mouse::getPosition(window)))) {
-					if (evnt.mouseWheel.delta > 0) {
-						modulSound.showFreq = false;
-					}
-					else if (evnt.mouseWheel.delta < 0) {
-						modulSound.showFreq = true;
+				break;
+
+			case sf::Event::MouseButtonReleased:
+				if (sf::Mouse::Left == evnt.mouseButton.button) {
+					vocSet.updatePanel(mPos, 1, 0, 0);
+					cout << "left released" << endl;
+					for (int i = 0; i < sounds.size();i++) {
+						if (sounds[i].checkIfMouseIn(mPos)) {
+							sounds[i].playSound();
+						}
 					}
 				}
-				if (vocodSound.checkIfMouseIn(sf::Vector2f(sf::Mouse::getPosition(window)))) {
-					if (evnt.mouseWheel.delta > 0) {
-						vocodSound.showFreq = false;
-					}
-					else if (evnt.mouseWheel.delta < 0) {
-						vocodSound.showFreq = true;
-					}
+				if (sf::Mouse::Right == evnt.mouseButton.button) {
+					vocSet.updatePanel(mPos, 0, 1, 0);
+					cout << "rigth released"<<endl;
 				}
 
+			default:
+				break;
 			}
-		}
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-			prevLeftPressed = true;
-		}
-		else {
-			if (prevLeftPressed) {
-				sf::Vector2f mPos = sf::Vector2f(sf::Mouse::getPosition(window));
-				if (mPos.x > carrierSound.position.x && mPos.x < carrierSound.position.x + carrierSound.siez.x && mPos.y > carrierSound.position.y && mPos.y < carrierSound.position.y + carrierSound.siez.y) {
-					carrierSound.playSound();
-				}
-				if (mPos.x > modulSound.position.x && mPos.x < modulSound.position.x + modulSound.siez.x && mPos.y > modulSound.position.y && mPos.y < modulSound.position.y + modulSound.siez.y) {
-					modulSound.playSound();
-				}
-				if (mPos.x > vocodSound.position.x && mPos.x < vocodSound.position.x + vocodSound.siez.x && mPos.y > vocodSound.position.y && mPos.y < vocodSound.position.y + vocodSound.siez.y) {
-					vocodSound.playSound();
-				}
-			}
-			prevLeftPressed = false;
-		}
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
-			prevRightPressed = true;
-		}
-		else {
-			if (prevRightPressed) {
-				sf::Vector2f mPos = sf::Vector2f(sf::Mouse::getPosition(window));
-				if (mPos.x > carrierSound.position.x && mPos.x < carrierSound.position.x + carrierSound.siez.x && mPos.y > carrierSound.position.y && mPos.y < carrierSound.position.y + carrierSound.siez.y) {
-					string newPath;
-					cout << "Give path to new sound: ";
-					cin >> newPath;
-					cout << newPath << endl;
-
-					sf::SoundBuffer newpathSB;
-					newpathSB.loadFromFile(newPath);
-					vector < sf::Int16> newpathSamples;
-					for (int i = 0; i < newpathSB.getSampleCount();i++) {
-						newpathSamples.push_back(newpathSB.getSamples()[i]);
-					}
-					carrierSound.data = newpathSamples;
-					carrierSound.reloadSound();
-					vocodSound.data = vocoder(modulSound.data, carrierSound.data);
-					vocodSound.reloadSound();
-
-				}
-				if (mPos.x > modulSound.position.x && mPos.x < modulSound.position.x + modulSound.siez.x && mPos.y > modulSound.position.y && mPos.y < modulSound.position.y + modulSound.siez.y) {
-					string newPath;
-					cout << "Give path to new sound: ";
-					cin >> newPath;
-					cout << newPath << endl;
-
-					sf::SoundBuffer newpathSB;
-					newpathSB.loadFromFile(newPath);
-					vector < sf::Int16> newpathSamples;
-					for (int i = 0; i < newpathSB.getSampleCount();i++) {
-						newpathSamples.push_back(newpathSB.getSamples()[i]);
-					}
-					modulSound.data = newpathSamples;
-					modulSound.reloadSound();
-					vocodSound.data = vocoder(modulSound.data, carrierSound.data);
-					vocodSound.reloadSound();
-
-				}
-			}
-			prevRightPressed = false;
 		}
 
 		window.clear();
 
-		carrierSound.drawSound(window, { 100,100 }, { 1000,200 }, "carrier");
-		modulSound.drawSound(window, { 100,400 }, { 1000,200 }, "modulator");
-		vocodSound.drawSound(window, { 100,700 }, { 1000,200 }, "vocoded output");
-		vocSet.drawPanel(window, { 1200,100 }, {300, 800});
+		sounds[0].drawSound(window, { 100,100 }, { 1000,200 }, "carrier");
+		sounds[1].drawSound(window, { 100,400 }, { 1000,200 }, "modulator");
+		sounds[2].drawSound(window, { 100,700 }, { 1000,200 }, "vocoded output");
+		vocSet.drawPanel(window, { 1200,100 }, { 300, 800 });
 
 		window.display();
 
