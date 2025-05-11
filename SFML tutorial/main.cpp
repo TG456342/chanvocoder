@@ -86,7 +86,17 @@ vector<sf::Int16> IFFT(vector<complex<float>> data2) {
 	vector<sf::Int16> data;
 
 	for (int i = 0; i < data2.size();i++) {
-		data.push_back(data2[i].real());
+		if (data2[i].real() < pow(2, 15)) {
+			if (data2[i].real() > -pow(2, 15)) {
+				data.push_back(data2[i].real());
+			}
+			else {
+				data.push_back(-pow(2,15)+1);
+			}
+		}
+		else {
+			data.push_back(pow(2, 15) - 1);
+		}
 	}
 	return data;
 }
@@ -280,7 +290,7 @@ vector<sf::Int16> vocoder(vector<sf::Int16> modRawData, vector<sf::Int16> carRaw
 
 	for (int i = 0; i < windowedModCarData.size();i++) {
 		for (int j = 0; j < windowedModCarData[i].size();j++) {
-			modulatedCarrierSamples[i * windowingSize / 2 + j] += windowedModCarData[i][j] * ((cos((float(j) / float(windowedModCarData[i].size()) * PI) - PI / 2) + 1) / 4);
+			modulatedCarrierSamples[i * windowingSize / 2 + j] += windowedModCarData[i][j];//*((cos((float(j) / float(windowedModCarData[i].size()) * PI) - PI / 2) + 1) / 4);
 		}
 	}
 
